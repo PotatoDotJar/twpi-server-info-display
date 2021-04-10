@@ -11,6 +11,7 @@ namespace server_hub_backend_api.Models
         public TickInfo TickInfo { get; set; }
         public int PlayersOnline { get; set; }
         public int TotalPlayerSlots { get; set; }
+        public DateTime LastUpdated { get; set; }
     }
 
     public class TickInfo

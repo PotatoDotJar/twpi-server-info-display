@@ -1,6 +1,9 @@
 package pw.twpi.reportingforgemod.services;
 
 import com.google.gson.Gson;
+import com.microsoft.signalr.HubConnection;
+import com.microsoft.signalr.HubConnectionBuilder;
+import com.microsoft.signalr.HubConnectionState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
@@ -23,17 +26,19 @@ public class ReportingThread implements Runnable {
 
     private final MinecraftServer server;
     private static final Logger LOGGER = LogManager.getLogger();
+    private final HubConnection hubConnection;
 
     public ReportingThread(MinecraftServer server) {
         this.server = server;
+        this.hubConnection = HubConnectionBuilder.create(Config.REPORTING_URL.get()).build();
+        this.hubConnection.start();
     }
 
     @Override
     public void run() {
         while(server.isRunning()) {
-            LOGGER.debug("Reporting to server");
-
-            SendReport(server);
+            ServerReport report = GetReport(server);
+            SendReport(report);
 
             try {
                 Thread.sleep(Config.REPORT_INTERVAL.get());
@@ -41,29 +46,25 @@ public class ReportingThread implements Runnable {
         }
     }
 
-    private void SendReport(MinecraftServer server) {
-
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        Gson gson = new Gson();
-
-        try {
-            HttpPost reportRequest = new HttpPost(Config.REPORTING_URL.get());
-
-            // Build report
-            ServerReport report = new ServerReport();
-            report.setServerName(Config.SERVER_NAME.get());
-            report.setTickInfo(getTickInfo(server));
-            report.setPlayersOnline(server.getPlayerCount());
-            report.setTotalPlayerSlots(server.getMaxPlayers());
-
-            String jsonRequest = gson.toJson(report);
-            reportRequest.setEntity(new StringEntity(jsonRequest));
-            reportRequest.setHeader("Content-type", "application/json");
-
-            httpClient.execute(reportRequest);
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
+    public void SendReport(ServerReport report) {
+        if(this.hubConnection.getConnectionState() == HubConnectionState.CONNECTED) {
+            LOGGER.debug("Sending report to " + Config.REPORTING_URL.get());
+            this.hubConnection.send("SendReport", report);
+        } else {
+            this.hubConnection.start();
         }
+    }
+
+    private ServerReport GetReport(MinecraftServer server) {
+
+        // Build report
+        ServerReport report = new ServerReport();
+        report.setServerName(Config.SERVER_NAME.get());
+        report.setTickInfo(getTickInfo(server));
+        report.setPlayersOnline(server.getPlayerCount());
+        report.setTotalPlayerSlots(server.getMaxPlayers());
+
+        return report;
     }
 
     private TickInfo getTickInfo(MinecraftServer server) {

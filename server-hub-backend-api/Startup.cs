@@ -30,7 +30,7 @@ namespace server_hub_backend_api
             services.AddControllers();
 
             services.AddSignalR();
-            services.AddSingleton<MQTTService>();
+            services.AddSingleton<ReportService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,8 +48,6 @@ namespace server_hub_backend_api
                 endpoints.MapControllers();
                 endpoints.MapHub<NotificationHub>("/notifications");
             });
-
-            serviceProvider.GetRequiredService<MQTTService>();
         }
     }
 }

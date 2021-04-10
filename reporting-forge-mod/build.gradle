@@ -73,6 +73,7 @@ dependencies {
     // Thank you to https://github.com/lucko/spark/blob/master/spark-forge/build.gradle for helping
     // me figure this out!!!
     shade "org.apache.httpcomponents:httpclient:${httpclient_version}"
+    shade "com.microsoft.signalr:signalr:1.0.0"
 }
 
 // START: SHADING APACHE HTTP
