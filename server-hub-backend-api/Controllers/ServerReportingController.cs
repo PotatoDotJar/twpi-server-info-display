@@ -19,10 +19,13 @@ namespace server_hub_backend_api.Controllers
         private readonly ILogger<ServerReportingController> _logger;
         private readonly IHubContext<NotificationHub> _hubContext;
 
+        private readonly Dictionary<string, ServerReport> currentServerReports;
+
         public ServerReportingController(ILogger<ServerReportingController> logger, IHubContext<NotificationHub> hubContext)
         {
             _logger = logger;
             _hubContext = hubContext;
+            currentServerReports = new Dictionary<string, ServerReport>();
         }
 
         [HttpGet]
@@ -36,8 +39,18 @@ namespace server_hub_backend_api.Controllers
         {
             if(serverReport != null && !string.IsNullOrEmpty(serverReport.ServerName))
             {
-                await _hubContext.Clients.All.SendAsync("OnReceivedReport", serverReport);
-                _logger.LogInformation("Got server report from {0}.", serverReport.ServerName);
+                if(!currentServerReports.ContainsKey(serverReport.ServerName))
+                {
+                    // Add
+                    currentServerReports.Add(serverReport.ServerName, serverReport);
+                }
+                else
+                {
+                    // Update
+                    currentServerReports[serverReport.ServerName] = serverReport;
+                }
+
+                await _hubContext.Clients.All.SendAsync("OnReceivedReport", currentServerReports);
                 return new StatusResponse() { Success = true, Message = "Response recorded." };
             }
 

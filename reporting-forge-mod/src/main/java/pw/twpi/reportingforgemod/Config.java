@@ -38,8 +38,8 @@ public class Config {
                 .define("reportingUrl", "");
         SERVER_NAME = SERVER_BUILDER.comment("Server name reported. This should be unique.")
                 .define("serverName", UUID.randomUUID().toString());
-        REPORT_INTERVAL = SERVER_BUILDER.comment("Interval to report in seconds.")
-                .defineInRange("reportInterval", 10, 1, Integer.MAX_VALUE);
+        REPORT_INTERVAL = SERVER_BUILDER.comment("Interval to report in milliseconds.")
+                .defineInRange("reportInterval", 1000, 1, Integer.MAX_VALUE);
     }
 
     public static void loadConfig(ForgeConfigSpec spec, Path path) {

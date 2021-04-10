@@ -36,7 +36,7 @@ public class ReportingThread implements Runnable {
             SendReport(server);
 
             try {
-                Thread.sleep(Config.REPORT_INTERVAL.get() * 1000);
+                Thread.sleep(Config.REPORT_INTERVAL.get());
             } catch (InterruptedException ignored) { }
         }
     }

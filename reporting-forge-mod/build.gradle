@@ -70,6 +70,8 @@ dependencies {
     minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
 
     // Shade http so it is not blocked by Forge
+    // Thank you to https://github.com/lucko/spark/blob/master/spark-forge/build.gradle for helping
+    // me figure this out!!!
     shade "org.apache.httpcomponents:httpclient:${httpclient_version}"
 }
 
