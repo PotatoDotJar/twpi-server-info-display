@@ -1,0 +1,18 @@
+<div class="container">
+  <table class="table table-bordered">
+    <tr>
+      <th>Server Name</th>
+      <th>Players Online</th>
+      <th>Player Slots</th>
+      <th>TPS</th>
+      <th>Tick Time (ms)</th>
+    </tr>
+    <tr *ngFor="let report of reportData">
+      <td>{{ report.serverName }}</td>
+      <td>{{ report.playersOnline | number }}</td>
+      <td>{{ report.totalPlayerSlots | number }}</td>
+      <td>{{ report.tickInfo.meanTps | number }}</td>
+      <td>{{ report.tickInfo.meanTickTime | number }}</td>
+    </tr>
+  </table>
+</div>

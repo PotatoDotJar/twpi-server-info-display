@@ -29,6 +29,14 @@ namespace server_hub_backend_api
         {
             services.AddControllers();
 
+            services.AddCors(o => o.AddPolicy("CorsPolicy", builder => {
+                builder
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials()
+                .WithOrigins("http://localhost:4200");
+            }));
+
             services.AddSignalR();
             services.AddSingleton<ReportService>();
         }
@@ -42,6 +50,8 @@ namespace server_hub_backend_api
             }
 
             app.UseRouting();
+
+            app.UseCors("CorsPolicy");
 
             app.UseEndpoints(endpoints =>
             {
