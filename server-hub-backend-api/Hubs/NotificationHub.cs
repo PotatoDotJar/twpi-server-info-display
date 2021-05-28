@@ -26,5 +26,12 @@ namespace server_hub_backend_api.Hubs
 
             await _reportService.ConsumeReport(serverReport);
         }
+
+        public async Task ServerStopping(ServerReport serverReport)
+        {
+            _logger.LogInformation("{0} server stopping.", serverReport.ServerName);
+
+            await _reportService.ServerStopping(serverReport);
+        }
     }
 }

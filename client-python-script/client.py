@@ -3,25 +3,26 @@ import logging
 import sys
 from time import sleep
 import threading
+from lcd_handler import lcd 
 
-# LCD Lib
-import board
-import digitalio
-import adafruit_character_lcd.character_lcd as characterlcd
 
-# LCD Settings
-lcd_columns = 16
-lcd_rows = 2
-lcd_rs = digitalio.DigitalInOut(board.D22)
-lcd_en = digitalio.DigitalInOut(board.D17)
-lcd_d4 = digitalio.DigitalInOut(board.D25)
-lcd_d5 = digitalio.DigitalInOut(board.D24)
-lcd_d6 = digitalio.DigitalInOut(board.D23)
-lcd_d7 = digitalio.DigitalInOut(board.D18)
-
-Server_URL = "http://192.168.1.38:49154/notifications"
-
+Server_URL = "http://192.168.1.43:49156/notifications"
 server_list = None
+
+def onConnectionOpened():
+    global lcd
+    print("SignalR connection opened")
+    lcd.message = "SignalR\ncon. opened"
+
+def onConnectionClosed():
+    global lcd
+    print("SignalR connection closed")
+    lcd.message = "SignalR\ncon. closed"
+
+def onFailedToStartHub():
+    global lcd
+    print("SignalR failed to connect")
+    lcd.message = "SignalR\ncon. failed"
 
 def printServerDetails(server_list):
     for key in server_list:
@@ -43,22 +44,24 @@ def onReceivedReport(data):
     global server_list
     server_list = data[0]
 
-def displayLoopThread(name):
+def displayLoopThread():
     global server_list
-    # Initialise the lcd class
-    lcd = characterlcd.Character_LCD_Mono(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows)
-    lcd.clear()
+    global lcd
 
     a = 0
     while True:
         if server_list != None:
-            firstKey = list(server_list.keys())[0]
-            server = server_list[firstKey]
-            lcd.message = "{0}\nTPS:{1} {2}".format(str(server["serverName"])[0:5].ljust(5),\
-                str(server["tickInfo"]["meanTps"]).ljust(2), "{0}/{1}".format(server["playersOnline"], server["totalPlayerSlots"]))
+            serverNames = list(server_list.keys())
+
+            if(len(serverNames) > 0):
+                server = server_list[serverNames[0]]
+                lcd.clear()
+                lcd.message = "{0}\nTPS:{1} {2}".format(str(server["serverName"])[0:5].ljust(5),\
+                    str(server["tickInfo"]["meanTps"]).ljust(2), "{0}/{1}".format(server["playersOnline"], server["totalPlayerSlots"]))
+            else:
+                lcd.clear()
+                lcd.message = "No servers\nconnected"
             sleep(1)
-
-
 
 hub = HubConnectionBuilder()\
     .with_url(Server_URL)\
@@ -69,20 +72,26 @@ hub = HubConnectionBuilder()\
         "intervals": [1, 3, 5, 6, 7, 87, 3]
     }).build()
 
-hub.on_open(lambda: print("SignalR connection opened"))
-hub.on_close(lambda: print("SignalR connection closed"))
+# Handle on connect and disconnected
+hub.on_open(onConnectionOpened)
+hub.on_close(onConnectionClosed)
 
 hub.on("OnReceivedReport", onReceivedReport)
 
-hub.start()
+try:
+    hub.start()
 
-# Start display thread
-displayThread = threading.Thread(target=displayLoopThread, args=("Display Thread",))
-displayThread.start()
+    # Start display thread
+    displayThread = threading.Thread(target=displayLoopThread)
+    displayThread.start()
 
-while True:
-    # Continue running
-    pass
+
+    while True:
+        # Continue running
+        pass
+except ConnectionError:
+    onFailedToStartHub()
+
 
 hub.stop()
 sys.exit(0)

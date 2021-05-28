@@ -1,6 +1,5 @@
 package pw.twpi.reportingforgemod.services;
 
-import com.google.gson.Gson;
 import com.microsoft.signalr.HubConnection;
 import com.microsoft.signalr.HubConnectionBuilder;
 import com.microsoft.signalr.HubConnectionState;
@@ -8,10 +7,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.server.ServerWorld;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pw.twpi.reportingforgemod.Config;
@@ -34,6 +29,16 @@ public class ReportingThread implements Runnable {
         this.hubConnection.start();
     }
 
+    public void serverStopping() {
+        if(this.hubConnection.getConnectionState() == HubConnectionState.CONNECTED) {
+            ServerReport report = new ServerReport();
+            report.setServerName(Config.SERVER_NAME.get());
+
+            LOGGER.debug("Sending server stop to " + Config.REPORTING_URL.get());
+            this.hubConnection.send("ServerStopping", report);
+        }
+    }
+
     @Override
     public void run() {
         while(server.isRunning()) {
@@ -48,7 +53,7 @@ public class ReportingThread implements Runnable {
 
     public void SendReport(ServerReport report) {
         if(this.hubConnection.getConnectionState() == HubConnectionState.CONNECTED) {
-            LOGGER.debug("Sending report to " + Config.REPORTING_URL.get());
+            //LOGGER.debug("Sending report to " + Config.REPORTING_URL.get());
             this.hubConnection.send("SendReport", report);
         } else {
             this.hubConnection.start();
@@ -56,7 +61,6 @@ public class ReportingThread implements Runnable {
     }
 
     private ServerReport GetReport(MinecraftServer server) {
-
         // Build report
         ServerReport report = new ServerReport();
         report.setServerName(Config.SERVER_NAME.get());

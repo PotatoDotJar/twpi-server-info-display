@@ -7,6 +7,7 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,7 @@ import pw.twpi.reportingforgemod.services.ReportingThread;
 public class ReportingForgeMod
 {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static ReportingThread reportingThread;
 
     public ReportingForgeMod() {
         // Register config
@@ -31,8 +33,17 @@ public class ReportingForgeMod
         StartSyncThread(event.getServer());
     }
 
+    @SubscribeEvent
+    public void onServerStop(final FMLServerStoppingEvent event) {
+        LOGGER.info("Server stopping!");
+        if(reportingThread != null) {
+            reportingThread.serverStopping();
+        }
+    }
+
     public void StartSyncThread(MinecraftServer server) {
-        Thread reporting = new Thread(new ReportingThread(server));
+        reportingThread = new ReportingThread(server);
+        Thread reporting = new Thread(reportingThread);
         reporting.start();
         LOGGER.info("Reporting Thread Started!");
     }

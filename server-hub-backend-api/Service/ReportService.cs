@@ -41,6 +41,25 @@ namespace server_hub_backend_api.Service
                     currentServerReports[report.ServerName] = report;
                 }
 
+                CleanupStaleServers();
+
+                await _hubContext.Clients.All.SendAsync("OnReceivedReport", currentServerReports);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<bool> ServerStopping(ServerReport report)
+        {
+            if (report != null && !string.IsNullOrEmpty(report.ServerName))
+            {
+                // Remove server from reports
+                currentServerReports.Remove(report.ServerName);
+
+                CleanupStaleServers();
+
                 await _hubContext.Clients.All.SendAsync("OnReceivedReport", currentServerReports);
 
                 return true;
@@ -52,6 +71,19 @@ namespace server_hub_backend_api.Service
         public Dictionary<string, ServerReport> GetServerReports()
         {
             return currentServerReports;
+        }
+
+        private void CleanupStaleServers()
+        {
+            foreach (var kvServer in currentServerReports)
+            {
+                if((DateTime.Now - kvServer.Value.LastUpdated).TotalMinutes > 20)
+                {
+                    // If the server last report time was more than 20 min ago, remove it
+                    currentServerReports.Remove(kvServer.Key);
+                    _logger.LogInformation("Removed {0} from the server list. Last report was over 20min ago.", kvServer.Key);
+                }
+            }
         }
     }
 }
